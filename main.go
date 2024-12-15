@@ -24,9 +24,7 @@ func main() {
 					os.Exit(1)
 				}
 			}
-
 			notifier := internal.NewNotifier(webhookURL)
-
 			// Handle raw message if provided
 			if rawMessage != "" {
 				if err := notifier.SendRawMessage(rawMessage); err != nil {
@@ -35,7 +33,6 @@ func main() {
 				}
 				return
 			}
-
 			// Handle command execution
 			if err := notifier.HandleCommand(command, execType); err != nil {
 				fmt.Printf("Error: %v\n", err)

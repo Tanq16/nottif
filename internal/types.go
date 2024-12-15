@@ -1,5 +1,11 @@
 package internal
 
+const MaxFieldLength = 1024 // Discord's max field length
+
+type Notifier struct {
+	webhookURL string
+}
+
 type DiscordWebhook struct {
 	Content string  `json:"content"`
 	Embeds  []Embed `json:"embeds"`
