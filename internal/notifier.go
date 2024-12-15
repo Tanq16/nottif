@@ -89,7 +89,7 @@ func (n *Notifier) HandleCommand(command, execType string) error {
 						},
 						{
 							Name:   "OUTPUT",
-							Value:  fmt.Sprintf("```\n%s\n```", outputParts[0]),
+							Value:  fmt.Sprintf("\n%s\n", outputParts[0]),
 							Inline: false,
 						},
 						{
