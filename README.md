@@ -68,10 +68,10 @@ Below are some examples of how Notif notifications appear in Discord:
 | Description | Command | Result |
 |-------------|---------|--------|
 | Command Execution | <img src=".github/assets/cmdcmd.png" width="600"> | <img src=".github/assets/cmd.png" width="600"> |
-| Command Output | <img src=".github/assets/outcmd.png" width="600"> | <img src=".github/assets/out.png" width="400"> |
-| Custom Message | <img src=".github/assets/rawmsgcmd.png" width="600"> | <img src=".github/assets/rawmsg.png" width="400"> |
-| Large Output Split | <img src=".github/assets/splitcmd.png" width="600"> | <img src=".github/assets/split1.png" width="198"><img src=".github/assets/split2.png" width="198"> |
-| Output Too Large | <img src=".github/assets/largecmd.png" width="600"> | <img src=".github/assets/large.png" width="400"> |
+| Command Output | <img src=".github/assets/outcmd.png" width="600"> | <img src=".github/assets/out.png" width="600"> |
+| Custom Message | <img src=".github/assets/rawmsgcmd.png" width="600"> | <img src=".github/assets/rawmsg.png" width="600"> |
+| Large Output Split | <img src=".github/assets/splitcmd.png" width="600"> | <img src=".github/assets/split1.png" width="300"><img src=".github/assets/split2.png" width="300"> |
+| Output Too Large | <img src=".github/assets/largecmd.png" width="600"> | <img src=".github/assets/large.png" width="600"> |
 
 ## Technical Details
 
