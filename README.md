@@ -65,12 +65,13 @@ The configuration file should contain only the webhook URL as plain text.
 
 Below are some examples of how Notif notifications appear in Discord:
 
-| Description | Screenshot |
-|-------------|------------|
-| Command Execution | `[Screenshot placeholder]` |
-| Command Output | `[Screenshot placeholder]` |
-| Custom Message | `[Screenshot placeholder]` |
-| Large Output Split | `[Screenshot placeholder]` |
+| Description | Command | Result |
+|-------------|---------|--------|
+| Command Execution | <img src=".github/assets/cmdcmd.png"> | <img src=".github/assets/cmd.png"> |
+| Command Output | <img src=".github/assets/outcmd.png"> | <img src=".github/assets/out.png"> |
+| Custom Message | <img src=".github/assets/rawmsgcmd.png"> | <img src=".github/assets/rawmsg.png"> |
+| Large Output Split | <img src=".github/assets/splitcmd.png"> | <img src=".github/assets/split1.png"><img src=".github/assets/split2.png"> |
+| Output Too Large | <img src=".github/assets/largecmd.png"> | <img src=".github/assets/large.png"> |
 
 ## Technical Details
 
