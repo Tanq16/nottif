@@ -2,15 +2,11 @@
   <img src=".github/assets/logo.png" alt="NOTTIF Logo" width="250"/>
 </p>
 
-<h1 align="center">Nottif</h1>
-
 <p align="center">
-  <a href="https://github.com/tanq16/nottif/actions/workflows/release.yml"><img src="https://github.com/tanq16/nottif/actions/workflows/release.yml/badge.svg" alt="Release Build"></a>&nbsp;<a href="https://github.com/tanq16/nottif/releases/latest"><img src="https://img.shields.io/github/v/release/tanq16/nottif" alt="Latest Release"></a>&nbsp;<a href="https://goreportcard.com/report/github.com/tanq16/nottif"><img src="https://goreportcard.com/badge/github.com/tanq16/nottif" alt="Go Report Card"></a>
+  <a href="https://github.com/tanq16/nottif/actions/workflows/release.yml"><img src="https://github.com/tanq16/nottif/actions/workflows/release.yml/badge.svg" alt="Release Build"></a>&nbsp;<a href="https://github.com/tanq16/nottif/releases/latest"><img src="https://img.shields.io/github/v/release/tanq16/nottif" alt="Latest Release"></a>
 </p><br>
 
----
-
-`Nottif` is a command-line tool that sends Discord webhook notifications for given markdown messages.
+***`Nottif`*** is a command-line tool that sends Discord webhook notifications for given markdown messages.
 
 ## Installation
 
