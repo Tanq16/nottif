@@ -47,7 +47,7 @@ jobs:
           gh release create "${{ steps.version.outputs.new_version }}" \
             --title "Release ${{ steps.version.outputs.new_version }}" \
             --draft \
-            --notes "NOTIF - Latest (Version: ${{ steps.version.outputs.new_version }})" \
+            --notes "NOTTIF - Latest (Version: ${{ steps.version.outputs.new_version }})" \
             --target ${{ github.sha }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,13 +69,13 @@ jobs:
 
       - name: Build Binary
         run: |
-            GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o notif${{ matrix.os == 'windows' && '.exe' || '' }} .
-            zip -r notif-${{ matrix.os }}-${{ matrix.arch }}.zip notif${{ matrix.os == 'windows' && '.exe' || '' }} README.md LICENSE
+            GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o nottif${{ matrix.os == 'windows' && '.exe' || '' }} .
+            zip -r nottif-${{ matrix.os }}-${{ matrix.arch }}.zip nottif${{ matrix.os == 'windows' && '.exe' || '' }} README.md LICENSE
 
       - name: Upload Release Asset
         run: |
           gh release upload "${{ needs.process-commit.outputs.version }}" \
-            "notif-${{ matrix.os }}-${{ matrix.arch }}.zip" \
+            "nottif-${{ matrix.os }}-${{ matrix.arch }}.zip" \
             --clobber
         env:
           GH_TOKEN: ${{ github.token }}

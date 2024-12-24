@@ -2,7 +2,7 @@ package internal
 
 const (
 	MaxFieldLength = 1024 // Discord's max field length
-	AvatarURL      = "https://raw.githubusercontent.com/tanq16/notif/main/.github/assets/logo.png"
+	AvatarURL      = "https://raw.githubusercontent.com/tanq16/nottif/main/.github/assets/logo.png"
 )
 
 type Notifier struct {

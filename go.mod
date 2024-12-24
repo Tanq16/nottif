@@ -1,4 +1,4 @@
-module github.com/tanq16/notif
+module github.com/tanq16/nottif
 
 go 1.23.4
 

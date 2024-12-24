@@ -22,7 +22,7 @@ func GetWebhooksFromConfig() ([]string, error) {
 	// Check home directory config
 	homeDir, err := os.UserHomeDir()
 	if err == nil {
-		configPath := filepath.Join(homeDir, ".notif.webhook")
+		configPath := filepath.Join(homeDir, ".nottif.webhook")
 		if content, err := os.ReadFile(configPath); err == nil {
 			scanner := bufio.NewScanner(bytes.NewReader(content))
 			for scanner.Scan() {
@@ -32,9 +32,7 @@ func GetWebhooksFromConfig() ([]string, error) {
 			}
 		}
 	}
-
-	// Check persist directory config
-	persistPath := filepath.Join("/persist", ".notif.webhook")
+	persistPath := filepath.Join("/persist", ".nottif.webhook")
 	if content, err := os.ReadFile(persistPath); err == nil {
 		scanner := bufio.NewScanner(bytes.NewReader(content))
 		for scanner.Scan() {
@@ -59,7 +57,7 @@ func (n *Notifier) SendMessage(message string) error {
 	for _, webhookURL := range n.webhookURLs {
 		for i, part := range parts {
 			webhook := DiscordWebhook{
-				Username:  "Notif",
+				Username:  "Nottif",
 				AvatarURL: AvatarURL,
 				Embeds: []Embed{
 					{
@@ -69,9 +67,9 @@ func (n *Notifier) SendMessage(message string) error {
 						Footer: Footer{
 							Text: func() string {
 								if len(parts) > 1 {
-									return fmt.Sprintf("Message via NOTIF (Part %d/%d)", i+1, len(parts))
+									return fmt.Sprintf("via Nottif (Part %d/%d)", i+1, len(parts))
 								}
-								return "Message via NOTIF"
+								return "via Nottif"
 							}(),
 						},
 					},

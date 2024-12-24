@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tanq16/notif/internal"
+	"github.com/tanq16/nottif/internal"
 )
 
 func readInput() (string, error) {
@@ -36,7 +36,7 @@ func main() {
 	var message string
 
 	rootCmd := &cobra.Command{
-		Use:   "notif [message]",
+		Use:   "nottif [message]",
 		Short: "A Discord webhook notification tool for sending markdown messages",
 		Run: func(cmd *cobra.Command, args []string) {
 			var webhooks []string

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/logo.png" alt="NOTIF Logo" width="250"/>
+  <img src=".github/assets/logo.png" alt="NOTTIF Logo" width="250"/>
 </p>
 
 <h1 align="center">Nottif</h1>
@@ -42,3 +42,15 @@ It will send to all the webhooks. If `-w` is used, it's only sent to that one UR
 
 > [!TIP]
 > Nottif sends the message as text, but Discord interprets it as Markdown. So you can get creative with custom messages! Just be mindful that Discord Markdown has a limited syntax.
+
+## Example
+
+Using the following command:
+
+```bash
+printf "# Test\nData as discord markdown \`\`\`bash\nfor i in \$(ls)\ndo\n    echo \$i\ndone\n\`\`\`\n\nBullet lists are also supported -\n- item 1\n- \`inline code\` item 2\n- **bold** item 3\n\n[Notiff](https://github.com/tanq16/nottif) is a GitHub link\!" | nottif
+```
+
+gives the following result:
+
+<img src=".github/assets/example.png" width="600">
