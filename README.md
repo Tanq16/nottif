@@ -4,9 +4,11 @@
 
 <p align="center">
   <a href="https://github.com/tanq16/nottif/actions/workflows/release.yml"><img src="https://github.com/tanq16/nottif/actions/workflows/release.yml/badge.svg" alt="Release Build"></a>&nbsp;<a href="https://github.com/tanq16/nottif/releases/latest"><img src="https://img.shields.io/github/v/release/tanq16/nottif" alt="Latest Release"></a>
-</p><br>
+</p>
 
-***`Nottif`*** is a command-line tool that sends Discord webhook notifications for given markdown messages.
+<p align="center">
+Nottif is a command-line tool that sends Discord webhook notifications for given markdown messages.
+</p><br>
 
 ## Installation
 
@@ -22,7 +24,7 @@ For command execution:
 
 ```bash
 # Send a message
-nottif -m "# Task completed"
+nottif "# Task completed"
 
 # Pipe text to send it
 echo "Test\nWebhook" | nottif -w $WEBHOOKURL

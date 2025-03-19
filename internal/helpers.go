@@ -1,10 +1,14 @@
 package internal
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"strings"
 )
 
 func chunkString(s string, chunkSize int) []string {
@@ -34,4 +38,24 @@ func (n *Notifier) sendToDiscord(webhookURL string, webhook DiscordWebhook) erro
 		return fmt.Errorf("discord webhook failed with status: %d", resp.StatusCode)
 	}
 	return nil
+}
+
+func ReadInput() (string, error) {
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		reader := bufio.NewReader(os.Stdin)
+		var builder strings.Builder
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil && err != io.EOF {
+				return "", err
+			}
+			builder.WriteString(line)
+			if err == io.EOF {
+				break
+			}
+		}
+		return strings.TrimSpace(builder.String()), nil
+	}
+	return "", nil
 }
