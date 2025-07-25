@@ -7,8 +7,16 @@
 </p>
 
 <p align="center">
-Nottif is a command-line tool that sends Discord webhook notifications for given markdown messages.
+Nottif is a self-hosted tool that aggregates notifications to send to Discord webhooks. These notifications can be scheduled in the app or be sent to Nottif via an API from multiple services.
 </p><br>
+
+
+# WORK IN PROGRESS
+
+
+-------
+
+
 
 ## Installation
 
