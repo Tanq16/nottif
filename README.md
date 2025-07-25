@@ -10,53 +10,57 @@
 Nottif is a self-hosted tool that aggregates notifications to send to Discord webhooks. These notifications can be scheduled in the app or be sent to Nottif via an API from multiple services.
 </p><br>
 
+## Features
 
-# WORK IN PROGRESS
+- **Web Dashboard**: An easy-to-use web interface to manage your settings.
+- **Scheduled Notifications**: Add and remove cron jobs directly from the UI to send messages at any schedule.
+- **API Endpoint**: A simple JSON API to trigger notifications from your own scripts and applications.
+- **Real-time Updates**: The dashboard uses Server-Sent Events (SSE) to display recent notifications instantly without needing a page refresh.
 
+## Screenshot
 
--------
-
-
+![img](.github/assets/ss.png)
 
 ## Installation
 
-Download the latest release binary for your platform from the [releases page](https://github.com/tanq16/nottif/releases). The tool is available for Linux, macOS, and Windows on both AMD64 and ARM64 architectures.
-
-OR, use `go install github.com/tanq16/nottif@latest` to install with `Go 1.23+`.
+1.  Download the latest release binary for your platform from the [releases page](https://github.com/tanq16/nottif/releases). Builds are provided for Linux, macOS, and Windows on both AMD64 and ARM64 architectures.
+2.  Run the binary from your terminal:
+    ```bash
+    ./nottif
+    ```
+3.  The server will start on port `8080`. On first run, it will create a `data` directory to store its configuration file (`config.json`).
 
 ## Usage
 
-Nottif can be used in two primary modes: command execution monitoring and raw message sending.
+Once the server is running, you can interact with it through the web dashboard or the API.
 
-For command execution:
+### Web Dashboard
 
-```bash
-# Send a message
-nottif "# Task completed"
+Navigate to `http://localhost:8080` in your web browser.
 
-# Pipe text to send it
-echo "Test\nWebhook" | nottif -w $WEBHOOKURL
-```
+From the dashboard, you can:
+- **Update the Discord Webhook URL**: Set the destination for all your notifications.
+- **Manage Cron Jobs**: Add new scheduled messages or delete existing ones.
+- **View Recent Activity**: See a live-updating list of the latest notifications sent by the system.
 
-For persistent webhooks, create a file in any of these locations with a list of webhooks:
+### API Endpoint
 
-- `~/.nottif.webhook`
-- `/persist/.nottif.webhook`
-- `~/.config/.nottif.webhook`
+You can send notifications programmatically by making a `POST` request to the `/api/send` endpoint. This is useful for integrating Nottif with CI/CD pipelines, scripts, or other applications.
 
-It will send to all the webhooks. If `-w` is used, it's only sent to that one URL.
+The endpoint expects a JSON payload with the following fields:
 
-> [!TIP]
-> Nottif sends the message as text, but Discord interprets it as Markdown. So you can get creative with custom messages! Just be mindful that Discord Markdown has a limited syntax.
+- `content` (required): The message to send. Supports Discord's markdown.
+- `username` (optional): The username to display for the notification. Defaults to "Nottif Notification".
+- `avatar_url` (optional): The URL of an image to use as the avatar. Defaults to the Nottif logo.
 
-## Example
-
-Using the following command:
+**Example using `curl`:**
 
 ```bash
-printf "# Test\nData as discord markdown \`\`\`bash\nfor i in \$(ls)\ndo\n    echo \$i\ndone\n\`\`\`\n\nBullet lists are also supported -\n- item 1\n- \`inline code\` item 2\n- **bold** item 3\n\n[Notiff](https://github.com/tanq16/nottif) is a GitHub link\!" | nottif
+curl -X POST \
+  http://localhost:8080/api/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "**Build Succeeded!**\nVersion: `v1.2.3`\n[View Details](https://example.com)",
+    "username": "CI/CD Pipeline"
+  }'
 ```
-
-gives the following result:
-
-<img src=".github/assets/example.png" width="600">

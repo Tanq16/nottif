@@ -8,10 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const testNotificationBtnDesktop = document.getElementById('test-notification-btn-desktop');
     const testNotificationBtnMobile = document.getElementById('test-notification-btn-mobile');
 
-    // --- SVG Icons ---
-    const successSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-    const failureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
-
     // --- Toast Notification ---
     const showToast = (message, isError = false) => {
         const toast = document.createElement('div');
@@ -82,10 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const createEventElement = (event) => {
         const iconColor = event.success ? 'var(--green)' : 'var(--red)';
-        const iconSVG = event.success ? successSVG : failureSVG;
+        const iconClass = event.success ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
         const time = new Date(event.timestamp).toLocaleTimeString();
         
-        // Don't truncate API event messages (which are usernames), but truncate others.
         let messageText = event.message;
         if (event.source !== 'API') {
             messageText = `${event.message.substring(0, 25)}${event.message.length > 25 ? '...' : ''}`;
@@ -94,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventElement = document.createElement('div');
         eventElement.className = 'flex items-center p-2 rounded-lg';
         eventElement.innerHTML = `
-            <div class="flex items-center justify-center w-10 h-10 rounded-full mr-4 flex-shrink-0" style="background-color: var(--surface0); color: ${iconColor};">
-                ${iconSVG}
+            <div class="flex items-center justify-center w-10 h-10 rounded-full mr-4 flex-shrink-0 text-xl" style="background-color: var(--surface0); color: ${iconColor};">
+                <i class="${iconClass}"></i>
             </div>
             <p class="font-semibold flex-grow">${event.source}: ${messageText}</p>
             <p class="text-sm font-mono" style="color: var(--subtext0);">${time}</p>
@@ -123,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventElement = createEventElement(event);
         recentRequestsList.prepend(eventElement);
 
-        // Keep the list at a max of 10 items
         while (recentRequestsList.children.length > 10) {
             recentRequestsList.removeChild(recentRequestsList.lastChild);
         }
@@ -143,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Failed to add cron job');
             addCronForm.reset();
             showToast('Cron job added successfully!');
-            loadCronJobs(); // Reload crons, SSE will handle the event update
+            loadCronJobs();
         } catch (error) {
             console.error('Error adding cron job:', error);
             showToast('Error: Could not add cron job.', true);
@@ -155,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`/api/cron/delete/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete cron job');
             showToast('Cron job deleted.');
-            loadCronJobs(); // Reload crons, SSE will handle the event update
+            loadCronJobs();
         } catch (error) {
             console.error('Error deleting cron job:', error);
             showToast('Error: Could not delete cron job.', true);
@@ -173,7 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!response.ok) throw new Error('Failed to update webhook URL');
             showToast('Webhook URL updated successfully!');
-            // SSE will handle the event update
         } catch (error) {
             console.error('Error updating webhook:', error);
             showToast('Error: Could not update webhook URL.', true);
@@ -186,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'Failed to send');
             showToast('Test notification sent!');
-            // SSE will handle the event update
         } catch (error) {
             console.error('Error sending test notification:', error);
             showToast(`Error: ${error.message}`, true);
@@ -200,14 +192,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const newEvent = JSON.parse(e.data);
             prependEvent(newEvent);
 
-            // If a cron job was added or deleted, reload the cron list
             if (newEvent.source === 'System' && newEvent.message.includes('cron job')) {
                 loadCronJobs();
             }
         };
 
         evtSource.onerror = () => {
-            // Don't log error on page close, but you could add reconnect logic here
             console.log("SSE connection closed or errored. Will not reconnect automatically.");
             evtSource.close();
         };
