@@ -3,7 +3,8 @@ package cron
 import (
 	"log"
 
-	"github.com/robfig/cron/v3"
+	"github.com/go-co-op/gocron/v2"
+	"github.com/google/uuid"
 	"github.com/tanq16/nottif/internal/config"
 	"github.com/tanq16/nottif/internal/notifier"
 )
@@ -13,22 +14,27 @@ type AddEventFunc func(source, message string, success bool)
 
 // Scheduler manages the cron jobs.
 type Scheduler struct {
-	cron       *cron.Cron
+	scheduler  gocron.Scheduler
 	config     *config.Config
 	notifier   *notifier.Notifier
 	addEvent   AddEventFunc
-	jobEntries map[string]cron.EntryID // Maps our job ID to the cron library's EntryID
+	jobEntries map[string]uuid.UUID // Maps our job ID to the gocron job's UUID
 }
 
 // NewScheduler creates and configures a new cron scheduler.
-func NewScheduler(cfg *config.Config, n *notifier.Notifier, addEvent AddEventFunc) *Scheduler {
+func NewScheduler(cfg *config.Config, n *notifier.Notifier, addEvent AddEventFunc) (*Scheduler, error) {
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Scheduler{
-		cron:       cron.New(),
+		scheduler:  s,
 		config:     cfg,
 		notifier:   n,
 		addEvent:   addEvent,
-		jobEntries: make(map[string]cron.EntryID),
-	}
+		jobEntries: make(map[string]uuid.UUID),
+	}, nil
 }
 
 // Start initializes jobs from config and starts the cron scheduler.
@@ -38,12 +44,12 @@ func (s *Scheduler) Start() {
 		s.AddJob(job)
 	}
 	s.config.Mu.RUnlock()
-	s.cron.Start()
+	s.scheduler.Start()
 }
 
 // AddJob adds a new cron job to the scheduler.
 func (s *Scheduler) AddJob(job config.CronJob) {
-	entryID, err := s.cron.AddFunc(job.Schedule, func() {
+	task := func() {
 		log.Printf("Running cron job: %s", job.Message)
 		err := s.notifier.SendMessage(
 			job.Message,
@@ -51,7 +57,15 @@ func (s *Scheduler) AddJob(job config.CronJob) {
 			"",            // Default avatar
 		)
 		s.addEvent("Cron", job.Message, err == nil)
-	})
+	}
+
+	newJob, err := s.scheduler.NewJob(
+		gocron.CronJob(
+			job.Schedule,
+			false, // standard 5-field cron expression
+		),
+		gocron.NewTask(task),
+	)
 
 	if err != nil {
 		log.Printf("Error adding cron job '%s' with schedule '%s': %v", job.Message, job.Schedule, err)
@@ -59,17 +73,21 @@ func (s *Scheduler) AddJob(job config.CronJob) {
 	}
 
 	log.Printf("Scheduled cron job '%s' with schedule '%s'", job.Message, job.Schedule)
-	s.jobEntries[job.ID] = entryID
+	s.jobEntries[job.ID] = newJob.ID()
 }
 
 // RemoveJob removes a cron job from the scheduler.
 func (s *Scheduler) RemoveJob(jobID string) {
-	entryID, ok := s.jobEntries[jobID]
+	gocronJobID, ok := s.jobEntries[jobID]
 	if !ok {
 		log.Printf("Attempted to remove a cron job with ID '%s' that was not found in the scheduler.", jobID)
 		return
 	}
-	s.cron.Remove(entryID)
+
+	if err := s.scheduler.RemoveJob(gocronJobID); err != nil {
+		log.Printf("Error removing job with ID '%s' from scheduler: %v", jobID, err)
+	}
+
 	delete(s.jobEntries, jobID)
 	log.Printf("Removed cron job with ID '%s' from scheduler.", jobID)
 }
