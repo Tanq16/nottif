@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nottif Dashboard</title>
     
+    <!-- PWA Manifest & Theme Color -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e1e2e">
+
+    <!-- Apple PWA Tags -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nottif">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -63,7 +73,7 @@
                     <a href="https://github.com/Tanq16/nottif" target="_blank" title="GitHub Repository" class="text-overlay1 hover:text-mauve transition-colors text-3xl">
                         <i class="fa-brands fa-github"></i>
                     </a>
-                    <img src="https://raw.githubusercontent.com/tanq16/nottif/main/.github/assets/logo.png" alt="Nottif Logo" class="h-40 w-40 mx-8" onerror="this.onerror=null;this.src='https://placehold.co/160x160/1e1e2e/cdd6f4?text=N';">
+                    <img src="/icons/icon-512x512.png" alt="Nottif Logo" class="h-40 w-40 mx-8" onerror="this.onerror=null;this.src='https://placehold.co/160x160/1e1e2e/cdd6f4?text=N';">
                     <button id="test-notification-btn-desktop" title="Send Test Notification" class="text-overlay1 hover:text-mauve transition-colors text-3xl">
                         <i class="fa-solid fa-bolt-lightning"></i>
                     </button>
@@ -109,7 +119,7 @@
                     <a href="https://github.com/Tanq16/nottif" target="_blank" title="GitHub Repository" class="text-overlay1 hover:text-mauve transition-colors">
                         <i class="fa-brands fa-github"></i>
                     </a>
-                    <img src="https://raw.githubusercontent.com/tanq16/nottif/main/.github/assets/logo.png" alt="Nottif Logo" class="h-16 w-16 mx-6" onerror="this.onerror=null;this.src='https://placehold.co/64x64/1e1e2e/cdd6f4?text=N';">
+                    <img src="/icons/icon-192x192.png" alt="Nottif Logo" class="h-16 w-16 mx-6" onerror="this.onerror=null;this.src='https://placehold.co/64x64/1e1e2e/cdd6f4?text=N';">
                     <button id="test-notification-btn-mobile" title="Send Test Notification" class="text-overlay1 hover:text-mauve transition-colors">
                         <i class="fa-solid fa-bolt-lightning"></i>
                     </button>
@@ -139,5 +149,16 @@
         </main>
     </div>
     <script src="/script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

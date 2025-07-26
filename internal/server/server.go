@@ -113,15 +113,21 @@ func New(cfg *config.Config, frontendFS embed.FS) (*Server, error) {
 	return s, nil
 }
 
-// addEvent adds a new event to the in-memory log and broadcasts it.
+// addEvent adds a new event to the in-memory log and broadcasts the full list.
 func (s *Server) addEvent(source, message string, success bool) {
 	s.eventsMu.Lock()
 	defer s.eventsMu.Unlock()
 
+	// Truncate message for display if it's not from the API and is too long.
+	displayMessage := message
+	if source != "API" && len(displayMessage) > 25 {
+		displayMessage = displayMessage[:25] + "..."
+	}
+
 	event := Event{
 		Timestamp: time.Now(),
 		Source:    source,
-		Message:   message,
+		Message:   displayMessage, // Use the potentially truncated message
 		Success:   success,
 	}
 
@@ -133,12 +139,12 @@ func (s *Server) addEvent(source, message string, success bool) {
 		s.events = s.events[:maxEvents]
 	}
 
-	// Broadcast the new event to SSE clients
-	eventJSON, err := json.Marshal(event)
+	// Broadcast the ENTIRE list of events to SSE clients
+	eventsJSON, err := json.Marshal(s.events)
 	if err == nil {
-		s.Broadcaster.broadcast <- eventJSON
+		s.Broadcaster.broadcast <- eventsJSON
 	} else {
-		log.Printf("Error marshaling event for SSE broadcast: %v", err)
+		log.Printf("Error marshaling events for SSE broadcast: %v", err)
 	}
 }
 
@@ -238,14 +244,21 @@ func (s *Server) handleAddCron() http.HandlerFunc {
 
 		job.ID = uuid.New().String()
 
-		s.Scheduler.AddJob(job)
+		// Attempt to add the job to the scheduler and check for errors (e.g., invalid schedule)
+		if err := s.Scheduler.AddJob(job); err != nil {
+			respondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
+		// If the job is valid, save it to the config
 		s.Config.Mu.Lock()
 		s.Config.CronJobs = append(s.Config.CronJobs, job)
 		err := s.Config.Save()
 		s.Config.Mu.Unlock()
 
 		if err != nil {
+			// If saving fails, try to roll back by removing the job from the scheduler
+			s.Scheduler.RemoveJob(job.ID)
 			respondWithError(w, http.StatusInternalServerError, "Failed to save config")
 			return
 		}
@@ -349,14 +362,9 @@ func (s *Server) handleSendNotification() http.HandlerFunc {
 			return
 		}
 
-		// Use username for the event message, with a fallback
-		eventMessage := payload.Username
-		if eventMessage == "" {
-			eventMessage = "API Notification"
-		}
-
 		err := s.Notifier.SendMessage(payload.Content, payload.Username, payload.AvatarURL)
-		s.addEvent("API", eventMessage, err == nil)
+		// Log the actual content of the message for API events.
+		s.addEvent("API", payload.Content, err == nil)
 		if err != nil {
 			log.Printf("Failed to send notification via API: %v", err)
 			respondWithError(w, http.StatusInternalServerError, "Failed to send notification")

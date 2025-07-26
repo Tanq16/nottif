@@ -41,14 +41,15 @@ func NewScheduler(cfg *config.Config, n *notifier.Notifier, addEvent AddEventFun
 func (s *Scheduler) Start() {
 	s.config.Mu.RLock()
 	for _, job := range s.config.CronJobs {
-		s.AddJob(job)
+		// Errors are logged inside AddJob. We don't want to halt startup for one bad cron.
+		_ = s.AddJob(job)
 	}
 	s.config.Mu.RUnlock()
 	s.scheduler.Start()
 }
 
 // AddJob adds a new cron job to the scheduler.
-func (s *Scheduler) AddJob(job config.CronJob) {
+func (s *Scheduler) AddJob(job config.CronJob) error {
 	task := func() {
 		log.Printf("Running cron job: %s", job.Message)
 		err := s.notifier.SendMessage(
@@ -69,11 +70,12 @@ func (s *Scheduler) AddJob(job config.CronJob) {
 
 	if err != nil {
 		log.Printf("Error adding cron job '%s' with schedule '%s': %v", job.Message, job.Schedule, err)
-		return
+		return err
 	}
 
 	log.Printf("Scheduled cron job '%s' with schedule '%s'", job.Message, job.Schedule)
 	s.jobEntries[job.ID] = newJob.ID()
+	return nil
 }
 
 // RemoveJob removes a cron job from the scheduler.

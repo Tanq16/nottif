@@ -81,10 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const iconClass = event.success ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
         const time = new Date(event.timestamp).toLocaleTimeString();
         
-        let messageText = event.message;
-        if (event.source !== 'API') {
-            messageText = `${event.message.substring(0, 25)}${event.message.length > 25 ? '...' : ''}`;
-        }
+        // Message formatting is now handled by the backend.
+        const messageText = event.message;
         
         const eventElement = document.createElement('div');
         eventElement.className = 'flex items-center p-2 rounded-lg';
@@ -109,20 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const prependEvent = (event) => {
-        const placeholder = recentRequestsList.querySelector('p');
-        if (placeholder) {
-            placeholder.remove();
-        }
-        
-        const eventElement = createEventElement(event);
-        recentRequestsList.prepend(eventElement);
-
-        while (recentRequestsList.children.length > 10) {
-            recentRequestsList.removeChild(recentRequestsList.lastChild);
-        }
-    };
-
     const addCronJob = async (e) => {
         e.preventDefault();
         const message = document.getElementById('cron_message').value;
@@ -137,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Failed to add cron job');
             addCronForm.reset();
             showToast('Cron job added successfully!');
-            loadCronJobs();
+            loadCronJobs(); // Refresh the list immediately for better UX
         } catch (error) {
             console.error('Error adding cron job:', error);
             showToast('Error: Could not add cron job.', true);
@@ -149,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`/api/cron/delete/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete cron job');
             showToast('Cron job deleted.');
-            loadCronJobs();
+            loadCronJobs(); // Refresh the list immediately for better UX
         } catch (error) {
             console.error('Error deleting cron job:', error);
             showToast('Error: Could not delete cron job.', true);
@@ -189,12 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const evtSource = new EventSource('/api/events/stream');
 
         evtSource.onmessage = (e) => {
-            const newEvent = JSON.parse(e.data);
-            prependEvent(newEvent);
+            // The data is a JSON array of all recent events. The arrival of any
+            // message from the server signifies a state change.
+            const allEvents = JSON.parse(e.data);
 
-            if (newEvent.source === 'System' && newEvent.message.includes('cron job')) {
-                loadCronJobs();
-            }
+            // Re-render the events list with the data we just received.
+            renderEvents(allEvents);
+
+            // Always reload the cron jobs list to ensure it's in sync.
+            loadCronJobs();
         };
 
         evtSource.onerror = () => {
