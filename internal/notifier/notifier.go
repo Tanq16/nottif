@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	// DefaultAvatarURL is the URL for the default Nottif logo.
 	DefaultAvatarURL = "https://raw.githubusercontent.com/tanq16/nottif/main/.github/assets/logo.png"
 )
 
@@ -20,39 +19,32 @@ type Notifier struct {
 	webhookURL string
 }
 
-// New creates a new Notifier instance.
 func New(webhookURL string) *Notifier {
 	return &Notifier{
 		webhookURL: webhookURL,
 	}
 }
 
-// SetWebhookURL updates the webhook URL in a thread-safe way.
 func (n *Notifier) SetWebhookURL(url string) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.webhookURL = url
 }
 
-// SendMessage sends a message to the configured Discord webhook.
-// It allows overriding the username and avatar URL.
+// SendMessage sends a message to the configured Discord webhook
 func (n *Notifier) SendMessage(message, username, avatarURL string) error {
 	n.mu.RLock()
 	url := n.webhookURL
 	n.mu.RUnlock()
-
 	if url == "" {
 		return fmt.Errorf("webhook URL is not configured")
 	}
-
-	// Apply defaults if parameters are empty
 	if username == "" {
 		username = "Nottif Notification"
 	}
 	if avatarURL == "" {
 		avatarURL = DefaultAvatarURL
 	}
-
 	webhook := DiscordWebhook{
 		Username:  username,
 		AvatarURL: avatarURL,
@@ -70,21 +62,17 @@ func (n *Notifier) SendMessage(message, username, avatarURL string) error {
 	if err != nil {
 		return err
 	}
-
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("discord webhook failed with status: %s", resp.Status)
 	}
-
 	return nil
 }
 
-// DiscordWebhook represents the structure of a Discord webhook payload.
 type DiscordWebhook struct {
 	Content   string  `json:"content,omitempty"`
 	Username  string  `json:"username,omitempty"`

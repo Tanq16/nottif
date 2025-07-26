@@ -20,15 +20,15 @@ import (
 
 const maxEvents = 10
 
-// Event represents a logged notification attempt.
+// Event is a logged notification attempt
 type Event struct {
 	Timestamp time.Time `json:"timestamp"`
-	Source    string    `json:"source"` // e.g., "API", "Cron", "Test"
+	Source    string    `json:"source"`
 	Message   string    `json:"message"`
 	Success   bool      `json:"success"`
 }
 
-// Broadcaster manages active SSE client connections.
+// Broadcaster manages active SSE client connections
 type Broadcaster struct {
 	clients   map[chan []byte]bool
 	new       chan (chan []byte)
@@ -37,7 +37,6 @@ type Broadcaster struct {
 	mu        sync.Mutex
 }
 
-// Server holds the dependencies for the HTTP server.
 type Server struct {
 	Router      *mux.Router
 	Config      *config.Config
@@ -48,7 +47,6 @@ type Server struct {
 	Broadcaster *Broadcaster
 }
 
-// NewBroadcaster creates and starts a new broadcaster instance.
 func NewBroadcaster() *Broadcaster {
 	b := &Broadcaster{
 		clients:   make(map[chan []byte]bool),
@@ -60,7 +58,6 @@ func NewBroadcaster() *Broadcaster {
 	return b
 }
 
-// listen runs the main loop for the broadcaster.
 func (b *Broadcaster) listen() {
 	for {
 		select {
@@ -90,10 +87,9 @@ func (b *Broadcaster) listen() {
 	}
 }
 
-// New creates and initializes a new Server instance.
+// New creates and initializes a new Server instance
 func New(cfg *config.Config, frontendFS embed.FS) (*Server, error) {
 	n := notifier.New(cfg.WebhookURL)
-
 	s := &Server{
 		Router:      mux.NewRouter(),
 		Config:      cfg,
@@ -101,45 +97,33 @@ func New(cfg *config.Config, frontendFS embed.FS) (*Server, error) {
 		events:      make([]Event, 0, maxEvents),
 		Broadcaster: NewBroadcaster(),
 	}
-
-	// Pass the AddEvent method to the scheduler
 	scheduler, err := cron.NewScheduler(cfg, n, s.addEvent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cron scheduler: %w", err)
 	}
 	s.Scheduler = scheduler
-
 	s.routes(frontendFS)
 	return s, nil
 }
 
-// addEvent adds a new event to the in-memory log and broadcasts the full list.
+// addEvent adds a new event to the in-memory log and broadcasts the full list
 func (s *Server) addEvent(source, message string, success bool) {
 	s.eventsMu.Lock()
 	defer s.eventsMu.Unlock()
-
-	// Truncate message for display if it's not from the API and is too long.
 	displayMessage := message
 	if source != "API" && len(displayMessage) > 25 {
 		displayMessage = displayMessage[:25] + "..."
 	}
-
 	event := Event{
 		Timestamp: time.Now(),
 		Source:    source,
-		Message:   displayMessage, // Use the potentially truncated message
+		Message:   displayMessage,
 		Success:   success,
 	}
-
-	// Prepend the new event
-	s.events = append([]Event{event}, s.events...)
-
-	// Trim the slice if it exceeds the max size
+	s.events = append([]Event{event}, s.events...) // prepend for ordering
 	if len(s.events) > maxEvents {
 		s.events = s.events[:maxEvents]
 	}
-
-	// Broadcast the ENTIRE list of events to SSE clients
 	eventsJSON, err := json.Marshal(s.events)
 	if err == nil {
 		s.Broadcaster.broadcast <- eventsJSON
@@ -148,7 +132,6 @@ func (s *Server) addEvent(source, message string, success bool) {
 	}
 }
 
-// routes sets up all the application routes.
 func (s *Server) routes(frontendFS embed.FS) {
 	api := s.Router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/healthcheck", s.handleHealthCheck()).Methods("GET")
@@ -160,13 +143,11 @@ func (s *Server) routes(frontendFS embed.FS) {
 	api.HandleFunc("/send", s.handleSendNotification()).Methods("POST")
 	api.HandleFunc("/events", s.handleGetEvents()).Methods("GET")
 	api.HandleFunc("/events/stream", s.handleStreamEvents()).Methods("GET")
-
 	strippedFS, err := fs.Sub(frontendFS, "frontend")
 	if err != nil {
 		log.Fatalf("Failed to strip frontend prefix: %v", err)
 	}
 	fileServer := http.FileServer(http.FS(strippedFS))
-
 	s.Router.PathPrefix("/").Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if p := r.URL.Path; path.Ext(p) == "" {
 			r.URL.Path = "/"
@@ -190,18 +171,14 @@ func (s *Server) handleStreamEvents() http.HandlerFunc {
 			respondWithError(w, http.StatusInternalServerError, "Streaming unsupported")
 			return
 		}
-
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
-
 		clientChan := make(chan []byte)
 		s.Broadcaster.new <- clientChan
-
 		defer func() {
 			s.Broadcaster.closing <- clientChan
 		}()
-
 		ctx := r.Context()
 		for {
 			select {
@@ -241,28 +218,21 @@ func (s *Server) handleAddCron() http.HandlerFunc {
 			respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 			return
 		}
-
 		job.ID = uuid.New().String()
-
-		// Attempt to add the job to the scheduler and check for errors (e.g., invalid schedule)
 		if err := s.Scheduler.AddJob(job); err != nil {
 			respondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		// If the job is valid, save it to the config
 		s.Config.Mu.Lock()
 		s.Config.CronJobs = append(s.Config.CronJobs, job)
 		err := s.Config.Save()
 		s.Config.Mu.Unlock()
-
 		if err != nil {
 			// If saving fails, try to roll back by removing the job from the scheduler
 			s.Scheduler.RemoveJob(job.ID)
 			respondWithError(w, http.StatusInternalServerError, "Failed to save config")
 			return
 		}
-
 		s.addEvent("System", fmt.Sprintf("Added cron job: %s", job.Message), true)
 		respondWithJSON(w, http.StatusCreated, job)
 	}
@@ -272,10 +242,8 @@ func (s *Server) handleDeleteCron() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
-
 		s.Config.Mu.Lock()
 		defer s.Config.Mu.Unlock()
-
 		var jobToDelete config.CronJob
 		found := false
 		var updatedJobs []config.CronJob
@@ -292,15 +260,12 @@ func (s *Server) handleDeleteCron() http.HandlerFunc {
 			respondWithError(w, http.StatusNotFound, "Cron job not found")
 			return
 		}
-
 		s.Scheduler.RemoveJob(id)
-
 		s.Config.CronJobs = updatedJobs
 		if err := s.Config.Save(); err != nil {
 			respondWithError(w, http.StatusInternalServerError, "Failed to save config")
 			return
 		}
-
 		s.addEvent("System", fmt.Sprintf("Deleted cron job: %s", jobToDelete.Message), true)
 		respondWithJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 	}
@@ -315,13 +280,11 @@ func (s *Server) handleUpdateWebhook() http.HandlerFunc {
 			respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 			return
 		}
-
 		s.Config.Mu.Lock()
 		s.Config.WebhookURL = payload.URL
 		s.Notifier.SetWebhookURL(payload.URL)
 		err := s.Config.Save()
 		s.Config.Mu.Unlock()
-
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "Failed to save config")
 			return
@@ -361,9 +324,7 @@ func (s *Server) handleSendNotification() http.HandlerFunc {
 			respondWithError(w, http.StatusBadRequest, "Content field is required")
 			return
 		}
-
 		err := s.Notifier.SendMessage(payload.Content, payload.Username, payload.AvatarURL)
-		// Log the actual content of the message for API events.
 		s.addEvent("API", payload.Content, err == nil)
 		if err != nil {
 			log.Printf("Failed to send notification via API: %v", err)
